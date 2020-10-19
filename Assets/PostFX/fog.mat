@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: fog
   m_Shader: {fileID: 4800000, guid: 4f5d2e7ec3f90674f8fe93f2d67d48f9, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: UFOGMODE_LINEAR
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -55,6 +55,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - uFogCube:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -74,7 +78,11 @@ Material:
     - _WaveDistance: 10
     - _WaveTrail: 1
     - _ZWrite: 1
+    - uFogDensity: 0.01
+    - uFogMode: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _WaveColor: {r: 1, g: 0, b: 0, a: 1}
+    - uFogColor: {r: 0.25618547, g: 0.45870417, b: 0.5377358, a: 1}
+    - uFogDensity: {r: 0.04, g: 1, b: 20, a: 0}

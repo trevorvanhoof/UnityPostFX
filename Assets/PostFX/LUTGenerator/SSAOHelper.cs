@@ -20,27 +20,38 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-Basic editor utility to generate textures from shaders.
-
-Blit a material to a temporary render texture, copy again to Texture2D and
-save as PNG. Deletes existing file beforehand.
-
-The texture is included so feel free to omit this file.
 */
+
 #if UNITY_EDITOR
 
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+public static partial class ExtensionMethods
+{
+    // https://stackoverflow.com/questions/273313/randomize-a-listt
+    private static System.Random rng = new System.Random();
+
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+}
+
 [ExecuteInEditMode]
-public class lensdirtgen : MonoBehaviour
+public class SSAOHelper : MonoBehaviour
 {
     [SerializeField] private bool cook = false;
-    [SerializeField] private Material mtl = null;
-    [SerializeField] private int width = 1920;
-    [SerializeField] private int height = 1080;
-    [SerializeField] private string path = "Assets/PostFX/lensdirt.png";
+    [SerializeField] private string path = "Assets/PostFX/ssaoLUT.png";
 
     void Update()
     {
@@ -48,23 +59,22 @@ public class lensdirtgen : MonoBehaviour
             return;
         cook = false;
 
-        // open render ctx
-        RenderTexture tmp = RenderTexture.GetTemporary(width, height, 0, 
-            RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);
-        var prev = RenderTexture.active;
-        RenderTexture.active = tmp;
-
-        // render
-        mtl.SetVector("uResolution", new Vector4(width, height, 0, 0));
-        Graphics.Blit(null, tmp, mtl);
-
         // to texture
-        Texture2D tex = new Texture2D(width, height, TextureFormat.ARGB32, false);
-        tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        Texture2D tex = new Texture2D(16, 1, TextureFormat.ARGB32, false, false);
 
-        // close render ctx
-        RenderTexture.active = prev;
-        RenderTexture.ReleaseTemporary(tmp);
+        List<int> shuffledIds = new List<int>();
+        for (int i = 0; i < 16; ++i)
+            shuffledIds.Add(i);
+        shuffledIds.Shuffle();
+
+        for (int i = 0; i < 16; ++i)
+        {
+            float angle = (shuffledIds[i] / 16.0f) * Mathf.PI;
+            angle += Random.Range(-0.05f, 0.05f);
+            float c = Mathf.Cos(angle);
+            float s = Mathf.Sin(angle);
+            tex.SetPixel(i, 0, new Color(c * 0.5f + 0.5f, 0.5f - s * 0.5f, s * 0.5f + 0.5f, c * 0.5f + 0.5f));
+        }
 
         // (re-)save texture
         if (File.Exists(path))

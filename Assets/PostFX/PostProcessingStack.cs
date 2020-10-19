@@ -44,6 +44,7 @@ the loop is stopped, this way you can enter -1 as target in any pass to view the
 output up to that point in the stack.
 */
 
+using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -52,95 +53,102 @@ public class PostProcessingStack : MonoBehaviour
     [System.Serializable]
     public class PostProc
     {
-        public Material mtl = null;
+        public Material mtl;
         public int[] sourceBufferIndices = new int[0];
         public int targetBufferIndex = -1;
     };
 
     [System.Serializable]
-    class BufferInfo
+    private class BufferInfo
     {
         public int factorX = 1;
         public int factorY = 1;
         public RenderTextureFormat format = RenderTextureFormat.ARGBHalf;
     }
 
-    [SerializeField] BufferInfo[] bufferFactors = new BufferInfo[0];
+    [SerializeField] private BufferInfo[] bufferFactors = new BufferInfo[0];
 
     [SerializeField] public PostProc[] stack = new PostProc[1];
 
-    RenderTexture[] buffers = new RenderTexture[0];
+    private RenderTexture[] _buffers = new RenderTexture[0];
 
-    void Awake()
+    private void Awake()
     {
+        #if UNITY_EDITOR
         if (Application.isPlaying)
+        #endif
         {
-            for (int i = 0; i < stack.Length; ++i)
-            {
-                stack[i].mtl = Instantiate(stack[i].mtl);
-            }
+            foreach (PostProc process in stack)
+                process.mtl = Instantiate(process.mtl);
         }
+        
+        _camera = GetComponent<Camera>();
+        _camera.depthTextureMode |= DepthTextureMode.Depth;
+        _cameraTransform = _camera.transform;
     }
 
-    private int w0;
-    private int h0;
+    private int _w0;
+    private int _h0;
+    private Camera _camera;
+    private Transform _cameraTransform;
 
     void OnEnable()
     {
         if (Screen.width < 64 || Screen.height < 64)
             return;
-        w0 = Screen.width;
-        h0 = Screen.height;
-        buffers = new RenderTexture[bufferFactors.Length];
+        _w0 = Screen.width;
+        _h0 = Screen.height;
+        _buffers = new RenderTexture[bufferFactors.Length];
         for (int i = 0; i < bufferFactors.Length; ++i)
-            buffers[i] = new RenderTexture(
+            _buffers[i] = new RenderTexture(
                 Screen.width / bufferFactors[i].factorX,
                 Screen.height / bufferFactors[i].factorY,
                 1,
                 bufferFactors[i].format);
     }
 
+    private readonly Vector3[] _frustumCornersA = new Vector3[4];
+    private Matrix4x4 _frustumCorners = Matrix4x4.identity;
+    private Matrix4x4 _prevVP;
+    private static readonly int uFrustumCorners = Shader.PropertyToID("uFrustumCorners");
+    private static readonly int uPrevWorldToCameraMatrix = Shader.PropertyToID("uPrevWorldToCameraMatrix");
+    private int _frame;
+    private static readonly int frame = Shader.PropertyToID("_Frame");
+
     void OnRenderImage(RenderTexture src, RenderTexture dst)
     {
-        if (Screen.width != w0 || Screen.height != h0)
+        ++_frame;
+            
+        if (Screen.width != _w0 || Screen.height != _h0)
             OnEnable();
 
 #if UNITY_EDITOR
-        if (!Application.isPlaying && buffers.Length != bufferFactors.Length)
+        if (!Application.isPlaying && _buffers.Length != bufferFactors.Length)
             OnEnable();
 #endif
-
-        for (int i = 0; i < stack.Length; ++i)
+        
+        _camera.CalculateFrustumCorners(new Rect(0, 0, 1, 1), 1.0f, Camera.MonoOrStereoscopicEye.Mono, _frustumCornersA);
+        _frustumCorners.SetRow(0, _cameraTransform.TransformVector(_frustumCornersA[0]));
+        _frustumCorners.SetRow(1, _cameraTransform.TransformVector(_frustumCornersA[3]));
+        _frustumCorners.SetRow(2, _cameraTransform.TransformVector(_frustumCornersA[1]));
+        _frustumCorners.SetRow(3, _cameraTransform.TransformVector(_frustumCornersA[2]));
+        
+        foreach (PostProc process in stack)
         {
-            for (int j = 0; j < stack[i].sourceBufferIndices.Length; ++j)
+            for (int j = 0; j < process.sourceBufferIndices.Length; ++j)
             {
-                if (stack[i].sourceBufferIndices[j] == -1)
-                {
-                    stack[i].mtl.SetTexture(string.Format("uImage{0}", j), src);
-                }
-                else
-                {
-                    stack[i].mtl.SetTexture(string.Format("uImage{0}", j), buffers[stack[i].sourceBufferIndices[j]]);
-                }
+                RenderTexture colorBuffer = process.sourceBufferIndices[j] == -1 ? src : _buffers[process.sourceBufferIndices[j]];
+                process.mtl.SetTexture($"uImage{j}", colorBuffer);
             }
-
-            RenderTexture tmpDst = (stack[i].targetBufferIndex == -1) ? dst : buffers[stack[i].targetBufferIndex];
-            if (tmpDst == null)
-            {
-                stack[i].mtl.SetVector("uResolution", new Vector4(Screen.width, Screen.height, 1.0f / Screen.width, 1.0f / Screen.height));
-            }
-            else
-            {
-                stack[i].mtl.SetVector("uResolution", new Vector4(tmpDst.width, tmpDst.height, 1.0f / tmpDst.width, 1.0f / tmpDst.height));
-            }
-
-            Graphics.Blit(
-                null,
-                tmpDst,
-                stack[i].mtl);
-
-            if (stack[i].targetBufferIndex == -1)
-                return;
+            
+            process.mtl.SetMatrix(uFrustumCorners, _frustumCorners);
+            process.mtl.SetMatrix(uPrevWorldToCameraMatrix, _prevVP);
+            process.mtl.SetInt(frame, _frame);
+            
+            RenderTexture target = (process.targetBufferIndex == -1) ? dst : _buffers[process.targetBufferIndex];
+            Graphics.Blit(null, target, process.mtl);
         }
+
+        _prevVP = _camera.projectionMatrix * _camera.worldToCameraMatrix;
     }
 }

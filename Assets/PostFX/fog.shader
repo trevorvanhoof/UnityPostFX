@@ -31,6 +31,14 @@ it is required to enable fog and mode must be exponential to avoid undefined beh
 */
 Shader "Hidden/fog"
 {
+    Properties
+    {
+        uFogColor ("Fog color", Color) = (0,0,0,0)
+        uFogCube ("Fog cube", Cube) = "black" {}
+        uFogDensity ("Density, Linear start, Linear end", Vector) = (0.01, 1.0, 100.0, 0.0)
+        [KeywordEnum(Linear, Exponential, Exponential Squared, Pow fit)] uFogMode ("Mode", Int) = 0
+    }
+
     SubShader
     {
         Cull Off ZWrite Off ZTest Always
@@ -38,12 +46,12 @@ Shader "Hidden/fog"
         Pass
         {
             CGPROGRAM
+            #pragma multi_compile_local UFOGMODE_LINEAR UFOGMODE_EXPONENTIAL UFOGMODE_EXPONENTIAL_SQUARED UFOGMODE_POW_FIT
             #pragma vertex vert
             #pragma fragment frag
-            
+
             #include "UnityCG.cginc"
 
-			
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -56,46 +64,55 @@ Shader "Hidden/fog"
                 float4 vertex : SV_POSITION;
             };
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
                 return o;
             }
-            
-			uniform sampler2D _CameraDepthTexture;
+
+            uniform sampler2D _CameraDepthTexture;
             uniform sampler2D uImage0;
             uniform float4 uFogColor;
+            uniform float4x4 uFrustum;
+            uniform samplerCUBE uFogCube;
+            #ifdef UFOGMODE_LINEAR
+            uniform float3 uFogDensity;
+            #else
             uniform float uFogDensity;
-            uniform float uNear;
-            uniform float uFar;
-            
-            float ComputeFogDistance(float depth)
-            {
-                float dist = depth * uFar;
-                dist -= uNear;
-                return dist;
-            }
-            
+            #endif
+
+            uniform float4x4 uFrustumCorners;
+
             half ComputeFog(float z)
             {
-                // Only supporting exponential fog
+        #ifdef UFOGMODE_POW_FIT
+                return pow(Linear01Depth(z), uFogDensity.x);
+        #else
+                z = LinearEyeDepth(z) - _ProjectionParams.y;
+            #ifdef UFOGMODE_LINEAR
+                return saturate(1.0 - ((z - uFogDensity.y) / (uFogDensity.z - uFogDensity.y)));
+            #endif
+            #ifdef UFOGMODE_EXPONENTIAL
                 return saturate(exp2(-uFogDensity * z));
+            #endif
+            #ifdef UFOGMODE_EXPONENTIAL_SQUARED
+                return saturate(exp2(-uFogDensity * z * z));
+            #endif
+        #endif
             }
 
             float4 frag(v2f i) : SV_Target
             {
+                float3 rayDirection = lerp(lerp(uFrustumCorners[0], uFrustumCorners[1], i.uv.x),
+                                           lerp(uFrustumCorners[2], uFrustumCorners[3], i.uv.x), i.uv.y);
+                float4 skyColor = texCUBE(uFogCube, rayDirection);
                 half4 color = tex2D(uImage0, i.uv);
-                
-                float depth = tex2D(_CameraDepthTexture, i.uv ).r;
-                depth = Linear01Depth(depth);
-                
-                float skybox = depth < 0.999999 && color.a > 0.0;
-                float dist = ComputeFogDistance(depth);
-                half fog = 1.0 - ComputeFog(dist);
-    
-                return lerp(color, uFogColor * uFogColor * 1.2, fog * skybox);
+                float depth = tex2D(_CameraDepthTexture, i.uv).r;
+                float skybox = depth != 0.0;
+                half fog = max(0.0, 1.0 - ComputeFog(depth));
+                return lerp(color, skyColor + uFogColor, fog * skybox);
             }
             ENDCG
         }

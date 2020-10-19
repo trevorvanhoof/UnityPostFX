@@ -104,7 +104,6 @@ Shader "Hidden/bloom"
 			uniform float uBloom;
 			uniform float uLensDirtAmount;
 			
-            uniform float2 uResolution;
             uniform float4 uBloomWeights;
             uniform float2 uBloomWeights2;
 

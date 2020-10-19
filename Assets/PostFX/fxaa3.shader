@@ -66,7 +66,6 @@ Shader "Hidden/fxaa3"
             }
 
             uniform sampler2D uImage0;
-            uniform float2 uResolution;
 
 #define bb(a)tex2D(uImage0,a)
 #define cc(a)aa(tex2D(uImage0,a).rgb)
@@ -78,7 +77,7 @@ float aa(float3 a){float3 b=float3(.299,.587,.114);return dot(a,b);}
             float4 frag(v2f inpt) : SV_Target
             {
                 float2 a=inpt.uv,
-                    c=1/uResolution;
+                    c=1/_ScreenParams;
                 float4 b=bb(a);
                 b.y=aa(b.rgb);
                 float d=dd(a,float2(0,1)),

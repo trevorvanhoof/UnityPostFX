@@ -68,7 +68,6 @@ Shader "Hidden/directionalblur"
             }
 
             uniform sampler2D uImage0;
-            uniform float2 uResolution;
             uniform float2 uDirection;
 
 #if 1
@@ -84,10 +83,10 @@ Shader "Hidden/directionalblur"
 
             float4 frag(v2f i) : SV_Target
             {
-                i.uv -= i.uv * (1.0 / uResolution);
+                i.uv -= i.uv * (1.0 / _ScreenParams);
                 fixed4 c = (0.0).xxxx;
                 for(int j = -N; j <= N; ++j)
-                    c += tex2D(uImage0, i.uv + (uDirection * (float)j + 0.5) / uResolution) * weights[abs(j)];
+                    c += tex2D(uImage0, i.uv + (uDirection * (float)j + 0.5) / _ScreenParams) * weights[abs(j)];
                 return c;
             }
             ENDCG

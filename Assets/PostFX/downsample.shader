@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Downsample source image to quarter size image, simply take 4 pixels of the original image
-and average them. It is assumed that uImage0's resolution is uResolution * 2
-(uResolution being the output resolution).
+and average them. It is assumed that uImage0's resolution is _ScreenParams * 2
+(_ScreenParams being the output resolution).
 */
 Shader "Hidden/downsample"
 {
@@ -60,11 +60,10 @@ Shader "Hidden/downsample"
             }
 
             uniform sampler2D uImage0;
-            uniform float2 uResolution;
-
+            
             float4 frag(v2f i) : SV_Target
             {
-                float2 r = 1.0 / (uResolution + uResolution);
+                float2 r = 1.0 / (_ScreenParams + _ScreenParams);
                 return max(0.0, tex2Dlod(uImage0, float4(i.uv + float2(1.0, 0.0) * r, 0, 0)) +
                                 tex2Dlod(uImage0, float4(i.uv + float2(1.0, 1.0) * r, 0, 0)) +
                                 tex2Dlod(uImage0, float4(i.uv + float2(0.0, 1.0) * r, 0, 0)) +

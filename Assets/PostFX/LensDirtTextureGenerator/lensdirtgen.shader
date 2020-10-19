@@ -35,7 +35,7 @@ The texture is included so feel free to omit this file.
 */
 Shader "Hidden/lensdirtgen"
 {
-    Properties { uResolution ("uResolution", Vector) = (1280, 720, 0, 0) }
+    Properties { _ScreenParams ("_ScreenParams", Vector) = (1280, 720, 0, 0) }
     
     SubShader
     {
@@ -70,7 +70,6 @@ Shader "Hidden/lensdirtgen"
                 return o;
             }
             
-            uniform float2 uResolution;
 #define vec2 float2
 #define vec3 float3
 #define vec4 float4
@@ -136,8 +135,8 @@ vec3 hsv2rgb(float h, float s, float v){return hsv2rgb(vec3(h,s,v));}
 
             fixed4 frag (v2f i) : SV_Target
             {
-            vec2 gl_FragCoord = i.uv * uResolution;
-    vec2 uv = (gl_FragCoord.xy * 2.0 - uResolution)/uResolution.y;
+            vec2 gl_FragCoord = i.uv * _ScreenParams;
+    vec2 uv = (gl_FragCoord.xy * 2.0 - _ScreenParams)/_ScreenParams.y;
 
     vec2 x = uv;
     float v = 2.0 * perlin(x * 16.0 + snoise(x * 8.0), 8);

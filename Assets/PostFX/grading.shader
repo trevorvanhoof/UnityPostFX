@@ -68,7 +68,6 @@ Shader "Hidden/grading"
             }
 
             uniform sampler2D uImage0;
-            uniform float2 uResolution;
 
             // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
             float3 ACESFilm(float3 x)

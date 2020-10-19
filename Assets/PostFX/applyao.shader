@@ -20,26 +20,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-Because Unity gives us a linear buffer & expects us to return one,
-we have to convert our final texture back to linear space.
-
-The reason we go to sRgb in the grading.glsl pass is that fxaa3.glsl only
-works well on sRgb inputs. 
-
-sRGB to linear conversion (C) 2012 Ian Taylor 
-from http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
 */
-Shader "Hidden/srgb2lin"
+Shader "Hidden/applyao"
 {
     Properties
     {
-        uExposure ("Exposure", Float) = 1.0
+        uOpacity ("Opacity", Range(0,4)) = 1.0
+        uBias ("Bias", Range(0, 0.5)) = 0.0
     }
+    
     SubShader
     {
         Cull Off ZWrite Off ZTest Always
-
+        
         Pass
         {
             CGPROGRAM
@@ -69,26 +62,31 @@ Shader "Hidden/srgb2lin"
             }
 
             uniform sampler2D uImage0;
-
-            float3 ACESFilm(float3 x)
-            {
-                float a = 2.51f;
-                float b = 0.03f;
-                float c = 2.43f;
-                float d = 0.59f;
-                float e = 0.14f;
-                return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
-            }
-
-            uniform float uExposure;
+            uniform sampler2D uImage1;
+            uniform sampler2D uImage2;
+            uniform sampler2D _CameraDepthTexture;
+            uniform float4x4 uPrevWorldToCameraMatrix;
+            uniform float4x4 uFrustumCorners;
+            uniform float uOpacity;
+            uniform float uBias;
 
             float4 frag(v2f i) : SV_Target
             {
-                float4 C_srgb = tex2D(uImage0, i.uv);
-                float3 C_lin_3 = 0.012522878 * C_srgb.xyz +
-                    0.682171111 * C_srgb.xyz * C_srgb.xyz +
-                    0.305306011 * C_srgb.xyz * C_srgb.xyz * C_srgb.xyz;
-                return float4(C_lin_3, C_srgb.a);
+                // Reproject the previous frame
+                float3 rayDirection = lerp(lerp(uFrustumCorners[0], uFrustumCorners[1], i.uv.x),
+                                           lerp(uFrustumCorners[2], uFrustumCorners[3], i.uv.x), i.uv.y);
+                float depth = tex2D(_CameraDepthTexture, i.uv).r;
+                depth = LinearEyeDepth(depth);
+                float3 worldPos = _WorldSpaceCameraPos + depth * rayDirection;
+                float4 cc = mul(uPrevWorldToCameraMatrix, float4(worldPos, 1.0));
+                float prevAO = tex2D(uImage2, cc.xy / cc.w * 0.5 + 0.5).r;
+
+                float visibility = saturate(lerp(tex2D(uImage1, i.uv).r, prevAO, 0.5) + uBias) - uBias + 0.5;
+                visibility = (visibility - 1.0) * uOpacity + 1.0;
+                
+                float4 r = tex2D(uImage0, i.uv);
+                r.xyz *= visibility;
+                return r;
             }
             ENDCG
         }

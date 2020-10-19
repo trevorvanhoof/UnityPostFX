@@ -58,7 +58,6 @@ Shader "Hidden/blit"
             }
 
             uniform sampler2D uImage0;
-            uniform float2 uResolution;
 
             float4 frag(v2f i) : SV_Target
             {

@@ -53,8 +53,6 @@ public class FogPostProcess : MonoBehaviour
         mtl.SetTexture("uImage0", src);
         mtl.SetColor("uFogColor", RenderSettings.fogColor);
         mtl.SetFloat("uFogDensity", RenderSettings.fogDensity);
-        mtl.SetFloat("uNear", cam.nearClipPlane);
-        mtl.SetFloat("uFar", cam.farClipPlane);
         Graphics.Blit(src, dst, mtl);
     }
 }

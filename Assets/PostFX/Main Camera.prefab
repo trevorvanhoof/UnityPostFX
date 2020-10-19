@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 8628565025011217801}
   - component: {fileID: 8628565025011217800}
   - component: {fileID: 5729036929480724669}
-  - component: {fileID: 3358985634485609678}
   - component: {fileID: 8628565025011217805}
   m_Layer: 0
   m_Name: Main Camera
@@ -50,7 +49,7 @@ Camera:
   m_FOVAxisMode: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 20.78461
+  m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -59,13 +58,13 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60.000004
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 261431
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -84,26 +83,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8628565025011217804}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e691b96eb725d54e9e2177a1f1af223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   resolutionScale: 1
   resample: {fileID: 2100000, guid: 30cd539cdc9e1d24592afcabc7f9b0ed, type: 2}
---- !u!114 &3358985634485609678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628565025011217804}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de09e123d331db94ab868dc540d5c780, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mtl: {fileID: 2100000, guid: 19699b57a15b979478c287ba432421e0, type: 2}
 --- !u!114 &8628565025011217805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,7 +145,13 @@ MonoBehaviour:
   - factorX: 1
     factorY: 1
     format: 0
+  - factorX: 2
+    factorY: 2
+    format: 0
   stack:
+  - mtl: {fileID: 2100000, guid: 19699b57a15b979478c287ba432421e0, type: 2}
+    sourceBufferIndices: ffffffff
+    targetBufferIndex: 13
   - mtl: {fileID: 2100000, guid: 50d2cf3431fdfa14ab75edc5d94cc3d1, type: 2}
     sourceBufferIndices: ffffffff
     targetBufferIndex: 1
@@ -215,14 +207,32 @@ MonoBehaviour:
     sourceBufferIndices: 0c000000
     targetBufferIndex: 6
   - mtl: {fileID: 2100000, guid: 07cae09b4c29344408aaf2a73b3ef8da, type: 2}
-    sourceBufferIndices: ffffffff010000000200000003000000040000000500000006000000
+    sourceBufferIndices: 0d000000010000000200000003000000040000000500000006000000
     targetBufferIndex: 0
-  - mtl: {fileID: 2100000, guid: 18e5cb71cd0d6ec4eacabdf0513b9a9f, type: 2}
-    sourceBufferIndices: 00000000
+  - mtl: {fileID: 2100000, guid: 1205cc1f73e32da429513e1251af44ab, type: 2}
+    sourceBufferIndices: 
     targetBufferIndex: 13
-  - mtl: {fileID: 2100000, guid: 91f1c817a83e7e0489e2717ef0b656ea, type: 2}
+  - mtl: {fileID: 2100000, guid: 50d2cf3431fdfa14ab75edc5d94cc3d1, type: 2}
+    sourceBufferIndices: 0d000000
+    targetBufferIndex: 1
+  - mtl: {fileID: 2100000, guid: 2dea9d1206111594ab9daece3e646750, type: 2}
+    sourceBufferIndices: 01000000
+    targetBufferIndex: 7
+  - mtl: {fileID: 2100000, guid: 01ca6ea1eb0209340acbe32c2771315d, type: 2}
+    sourceBufferIndices: 07000000
+    targetBufferIndex: 1
+  - mtl: {fileID: 2100000, guid: 0fc6b6a0e2f9d074cbbb0278f8d5fa1b, type: 2}
+    sourceBufferIndices: 00000000010000000e000000
+    targetBufferIndex: 13
+  - mtl: {fileID: 2100000, guid: 18e5cb71cd0d6ec4eacabdf0513b9a9f, type: 2}
     sourceBufferIndices: 0d000000
     targetBufferIndex: 0
+  - mtl: {fileID: 2100000, guid: 91f1c817a83e7e0489e2717ef0b656ea, type: 2}
+    sourceBufferIndices: 00000000
+    targetBufferIndex: 13
   - mtl: {fileID: 2100000, guid: a00eb314c3b68a040bef468ea17e7370, type: 2}
     sourceBufferIndices: 0d000000
     targetBufferIndex: -1
+  - mtl: {fileID: 2100000, guid: 2e69692e3c8f9df40bad46710b2606bf, type: 2}
+    sourceBufferIndices: 01000000
+    targetBufferIndex: 14
